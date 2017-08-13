@@ -2,14 +2,15 @@
 # -*- coding: utf-8 -*-
 
 import re
-from urllib import request
+from urllib import request, parse
 from bs4 import BeautifulSoup
 
-keyword_list = ['svm', '支持向量机', 'libsvm', '']
-fout = open("E:/python_file/zhihu.txt", "w", encoding="utf-8")
+keyword_list = ['svm', '支持向量机', 'libsvm']
+fout = open("E:/python_file/svm.txt", "w", encoding="utf-8")
 for keyword in keyword_list:
     print(keyword)
-    url = 'https://www.zhihu.com/search?type=content&q=' + str(keyword)
+    # 将中文转换为浏览器可识别字符（HTTP协议是ASCII编码的形式）
+    url = 'https://www.zhihu.com/search?type=content&q=' + parse.quote(keyword)
     user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) ' \
                  'Chrome/39.0.2171.95 Safari/537.36'
     headers = {'User-Agent': user_agent}
