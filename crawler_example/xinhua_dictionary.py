@@ -7,6 +7,7 @@ import os
 import re
 import time
 import random
+import requests
 from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.chrome.options import Options
@@ -54,6 +55,18 @@ def load_char(path):
     return all_chars
 
 
+def get_pinyin_url(path):
+    pinyin_url = dict()
+    with open(path, 'r', encoding='utf-8') as f:
+        for line in f.readlines():
+            line = line.strip()
+            if not line:
+                continue
+            url, pinyin = line.split(' ', 1)
+            pinyin_url[pinyin] = url
+    return pinyin_url
+
+
 def sleep_random(start=1, end=1.5):
     time.sleep(random.randrange(int(start * 100), int(end * 100), step=1) * 0.01)
 
@@ -89,46 +102,88 @@ def get_driver():
     return driver
 
 
+# def spider_run():
+#     pinyin_url = get_pinyin_url('pinyin_url.txt')
+#     one_proxy = get_proxy()
+#     for pinyin, url in pinyin_url.items():
+#         while True:
+#             try:
+#                 page_source = requests.get(url, timeout=2, headers=headers, proxies={"http": one_proxy})
+#
+#                 # dcap = DesiredCapabilities.PHANTOMJS.copy()
+#                 #
+#                 # header = {
+#                 #     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+#                 #     "Accept-Encoding": "gzip, deflate",
+#                 #     "Accept-Language": "zh-CN,zh;q=0.9",
+#                 #     "Cache-Control": "max-age=0",
+#                 #     "Connection": "keep-alive",
+#                 #     "Cookie": "__gads=ID=042517c3bb15f02e-225eddf29dcc0050:T=1634605271:RT=1634605271:S=ALNI_MZdY0ASGRC8LZ8ZpG-OPZcDFZERlg; __gpi=UID=00000496cfa1f71c:T=1649322191:RT=1649322191:S=ALNI_MbgHTbNGs2kCXMkYJq1N5zoILN_7w",
+#                 #     "Host": "xh.5156edu.com",
+#                 #     "Upgrade-Insecure-Requests": "1",
+#                 #     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36",
+#                 # }
+#                 # for key, value in header.items():
+#                 #     dcap['phantomjs.page.customHeaders.{}'.format(key)] = value
+#                 #
+#                 # proxy = [
+#                 #     '--proxy=%s' % get_proxy(),  # 设置的代理ip
+#                 #     '--proxy-type=http',         # 代理类型
+#                 #     '--ignore-ssl-errors=true',  # 忽略https错误
+#                 # ]
+#                 # driver = webdriver.PhantomJS(
+#                 #     executable_path=os.path.join(project_path, 'phantomjs-2.1.1-windows/bin/phantomjs.exe'),
+#                 #     desired_capabilities=dcap,
+#                 #     service_args=proxy)
+#                 # driver.get("http://xh.5156edu.com/pinyi.html")
+#                 # print(driver.page_source)
+#
+#                 # driver.get('http://xh.5156edu.com/')
+#                 # a = driver.find_element_by_tag_name('f_key').send_keys(char)
+#                 # b = driver.find_element_by_tag_name('SearchString').click()
+#             except:
+#                 pass
+#                 # driver = get_driver()
+
+
+def get_requests(url, header):
+    one_proxy = get_proxy()
+    print(one_proxy)
+    while True:
+        try:
+            respond = requests.get(url, timeout=2, headers=header, proxies={"http": one_proxy})
+            if respond.status_code == 200:
+                break
+            one_proxy = get_proxy()
+            print(one_proxy)
+            continue
+        except:
+            one_proxy = get_proxy()
+            print(one_proxy)
+    return respond
+
+
 def spider_run():
-    all_chars = load_char('pinyin2han.txt')
-    driver = get_driver()
-    for char in all_chars:
-        while True:
-            try:
-
-                dcap = DesiredCapabilities.PHANTOMJS.copy()
-
-                header = {
-                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                    "Accept-Encoding": "gzip, deflate",
-                    "Accept-Language": "zh-CN,zh;q=0.9",
-                    "Cache-Control": "max-age=0",
-                    "Connection": "keep-alive",
-                    "Cookie": "__gads=ID=042517c3bb15f02e-225eddf29dcc0050:T=1634605271:RT=1634605271:S=ALNI_MZdY0ASGRC8LZ8ZpG-OPZcDFZERlg; __gpi=UID=00000496cfa1f71c:T=1649322191:RT=1649322191:S=ALNI_MbgHTbNGs2kCXMkYJq1N5zoILN_7w",
-                    "Host": "xh.5156edu.com",
-                    "Upgrade-Insecure-Requests": "1",
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36",
-                }
-                for key, value in header.items():
-                    dcap['phantomjs.page.customHeaders.{}'.format(key)] = value
-
-                proxy = [
-                    '--proxy=%s' % get_proxy(),  # 设置的代理ip
-                    '--proxy-type=http',         # 代理类型
-                    '--ignore-ssl-errors=true',  # 忽略https错误
-                ]
-                driver = webdriver.PhantomJS(
-                    executable_path=os.path.join(project_path, 'phantomjs-2.1.1-windows/bin/phantomjs.exe'),
-                    desired_capabilities=dcap,
-                    service_args=proxy)
-                driver.get("http://xh.5156edu.com/pinyi.html")
-                print(driver.page_source)
-
-                # driver.get('http://xh.5156edu.com/')
-                # a = driver.find_element_by_tag_name('f_key').send_keys(char)
-                # b = driver.find_element_by_tag_name('SearchString').click()
-            except:
-                driver = get_driver()
+    header = {
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+        "Accept-Encoding": "gzip, deflate",
+        "Accept-Language": "zh-CN,zh;q=0.9",
+        "Cache-Control": "max-age=0",
+        "Connection": "keep-alive",
+        "Cookie": "__gads=ID=042517c3bb15f02e-225eddf29dcc0050:T=1634605271:RT=1634605271:S=ALNI_MZdY0ASGRC8LZ8ZpG-OPZcDFZERlg; __gpi=UID=00000496cfa1f71c:T=1649322191:RT=1649322191:S=ALNI_MbgHTbNGs2kCXMkYJq1N5zoILN_7w",
+        "Host": "xh.5156edu.com",
+        "Upgrade-Insecure-Requests": "1",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36",
+    }
+    pinyin_url = get_pinyin_url('pinyin_url.txt')
+    for pinyin, url in pinyin_url.items():
+        respond = get_requests(url, header)
+        page_source = respond.content.decode('gbk')
+        for item in re.finditer(r"class='fontbox' href='(?P<href>.*?)'>(?P<char>.)<", page_source):
+            hanzi = item.groupdict()['char']
+            char_url = 'http://xh.5156edu.com/' + item.groupdict()['href']
+            char_respond = get_requests(char_url, header)
+            print(char_respond.content)
 
 
 if __name__ == '__main__':
