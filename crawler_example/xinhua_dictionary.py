@@ -8,6 +8,7 @@ import re
 import time
 import random
 import requests
+from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.chrome.options import Options
@@ -152,7 +153,7 @@ def get_requests(url, header):
     while True:
         try:
             respond = requests.get(url, timeout=2, headers=header, proxies={"http": one_proxy})
-            if respond.status_code == 200:
+            if respond.status_code == 200 and "Burp Suite Professional" not in respond.text:
                 break
             one_proxy = get_proxy()
             print(one_proxy)
@@ -181,9 +182,58 @@ def spider_run():
         page_source = respond.content.decode('gbk')
         for item in re.finditer(r"class='fontbox' href='(?P<href>.*?)'>(?P<char>.)<", page_source):
             hanzi = item.groupdict()['char']
-            char_url = 'http://xh.5156edu.com/' + item.groupdict()['href']
+            # char_url = 'http://xh.5156edu.com/' + item.groupdict()['href']
+            char_url = 'http://xh.5156edu.com/' + 'html3/1617.html'
+            # char_url = 'http://xh.5156edu.com/' + 'html3/7578.html'
             char_respond = get_requests(char_url, header)
-            print(char_respond.content)
+            char_respond.encoding = char_respond.apparent_encoding
+            a = BeautifulSoup(char_respond.content.decode('gbk', errors='ignore'), 'html.parser')
+            # b = a.find(name="table", attrs={"id": "table1"})
+            # cy = set()
+            d = a.findAll('tr')
+            i = 0
+            # d[i-1].findAll('td')[1].find('script').text
+            while i < len(d):
+                text = d[i].text.strip()
+                if '相关成语' == text:
+                    i += 1
+                    if "更多相关成语" in d[i].text:
+                        more_cy_url = 'http://xh.5156edu.com/' + d[i].find('p').find('a').get('href')
+                        more_cy_respond = get_requests(more_cy_url, header)
+                        aa = BeautifulSoup(more_cy_respond.content.decode('gbk', errors='ignore'), 'html.parser')
+                        for aaa in aa.findAll(name="td", attrs={"width": "25%"}):
+                            print(aaa.text.strip())
+                    else:
+                        for bb in d[i].findAll('a'):
+                            print(bb.text.strip())
+                elif '同音字' == text:
+                    i += 1
+                    for bb in d[i].findAll('a'):
+                        print(bb.text.strip())
+                elif '同部首' == text:
+                    i += 1
+                    for bb in d[i].findAll('a'):
+                        print(bb.text.strip())
+                elif '同笔画' == text:
+                    i += 1
+                    for bb in d[i].findAll('a'):
+                        print(bb.text.strip())
+                elif re.search(r'拼音[\s\S]+笔划', text):
+                    j = 0
+                    e = d[i].findAll('td')
+                    while j < len(e):
+                        if e[j].text.strip() == "拼音：":
+                            j += 1
+                            print(e[j].find('script').text)
+                        elif e[j].text.strip() == "笔划：":
+                            j += 1
+                            print(e[j].text)
+                        j += 1
+                    # i += 1
+                    for bb in d[i].findAll('td'):
+                        print(bb.text.strip())
+                i += 1
+
 
 
 if __name__ == '__main__':
